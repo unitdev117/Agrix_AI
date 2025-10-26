@@ -1,5 +1,3 @@
-// controllers/botController.js
-
 const dbService = require('../services/databaseService');
 const cacheService = require('../services/cacheService');
 const geminiController = require('./geminiController');
@@ -19,7 +17,7 @@ const handleStart = async (msg) => {
 
         if (isNew) {
             // New user flow: Greet and ask for language
-            await bot.sendMessage(chatId, `👋 Welcome, ${msg.from.first_name}! I am a Gemini-powered bot.`);
+            await bot.sendMessage(chatId, `👋 Welcome, ${msg.from.first_name}! I am a Agrix - AI bot.`);
             handleLanguage(msg);
         } else {
             // Returning user flow: Welcome them back

@@ -1,5 +1,3 @@
-// config/db.js
-
 const mongoose = require('mongoose');
 require('dotenv').config();
 

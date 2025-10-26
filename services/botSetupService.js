@@ -1,8 +1,5 @@
-// services/botSetupService.js
-
 /**
- * Sets the bot's command menu that users see.
- * This should be called once when the bot starts.
+ * Sets the bot's command menu that users sees.
  * @param {object} bot - The initialized node-telegram-bot-api instance.
  */
 const setBotCommands = async (bot) => {

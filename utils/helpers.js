@@ -1,5 +1,3 @@
-// utils/helpers.js
-
 /**
  * Returns an inline keyboard for language selection.
  */
@@ -7,8 +5,12 @@ const getLanguageKeyboard = () => {
     return {
         inline_keyboard: [
             [
-                { text: 'English 🇬🇧', callback_data: 'lang_en' },
-                { text: 'हिन्दी 🇮🇳', callback_data: 'lang_hi' }
+                { text: 'English', callback_data: 'lang_en' },
+                { text: 'हिंदी', callback_data: 'lang_hi' }
+            ],
+            [
+                { text: 'বাংলা', callback_data: 'lang_bn' },
+                { text: 'भोजपुरी', callback_data: 'lang_bho' }
             ]
         ]
     };
@@ -16,10 +18,13 @@ const getLanguageKeyboard = () => {
 
 const languageMap = {
     en: 'English',
-    hi: 'Hindi'
+    hi: 'Hindi',
+    bn: 'Bengali (Bangla)',
+    bho: 'Bhojpuri'
 };
 
 module.exports = {
     getLanguageKeyboard,
     languageMap
 };
+

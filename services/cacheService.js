@@ -1,5 +1,3 @@
-// services/cacheService.js
-
 // A simple in-memory cache using a Map
 const userPreferencesCache = new Map();
 

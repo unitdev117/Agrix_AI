@@ -1,8 +1,8 @@
-// models/User.js
+
 
 const mongoose = require('mongoose');
 
-// The conversationHistory array has been removed from the schema.
+// The conversationHistory has been removed from the schema.
 const UserSchema = new mongoose.Schema({
     telegramId: {
         type: Number,
