@@ -1,3 +1,8 @@
+####################################
+BOT Status : OPERATIONAL🟩
+Test Link : https://t.me/AgrixAI_Bot
+####################################
+
 To start the server 
     Type npm start
 
