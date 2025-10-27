@@ -14,8 +14,8 @@ A Telegram bot powered by Google's Gemini AI model that supports multilingual co
 
 ## Features
 
-- 🤖 Powered by Gemini-1.5-Flash AI model
-- 🌐 Multilingual support (English and Hindi)
+- 🤖 Powered by Gemini-2.5-Flash-Lite AI model
+- 🌐 Multilingual support (English, Hindi, Bengoli & Bhojuri)
 - 💾 MongoDB integration for user preferences
 - 🚀 Express server for monitoring
 - 🔄 In-memory caching for better performance
