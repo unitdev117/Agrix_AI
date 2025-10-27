@@ -13,7 +13,7 @@ const model = genAI.getGenerativeModel(
   {
     model: modelName,
     generationConfig: {
-      maxOutputTokens: 1000,
+      maxOutputTokens: 700,
     },
   },
   { apiVersion: 'v1' }
