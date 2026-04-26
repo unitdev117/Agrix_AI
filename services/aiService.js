@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const logger = require('./loggerService');
 const metrics = require('./metricsService');
+const { buildPrompt } = require('../utils/promptBuilder');
 
 const DEFAULT_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 12000);
 const DEFAULT_RETRIES = Number(process.env.AI_RETRIES || 1);
@@ -19,7 +20,7 @@ const getModel = () => {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const configuredModel = process.env.GEMINI_MODEL || 'models/gemini-2.5-flash-lite';
+    const configuredModel = process.env.GEMINI_MODEL || 'models/gemini-3.1-flash-lite-preview';
     const modelName = configuredModel.startsWith('models/')
         ? configuredModel
         : `models/${configuredModel}`;
@@ -31,7 +32,7 @@ const getModel = () => {
                 maxOutputTokens: 700,
             },
         },
-        { apiVersion: 'v1' }
+        { apiVersion: 'v1beta' }
     );
 
     return model;
@@ -53,14 +54,6 @@ const withTimeout = async (promise, timeoutMs) => {
     }
 };
 
-const buildPrompt = (prompt, language) => {
-    if (!language) {
-        return prompt;
-    }
-
-    const languageInstruction = `Please provide the response in ${language}.`;
-    return `${prompt}\n\n---\n${languageInstruction}`;
-};
 
 const generateResponse = async ({ prompt, language, context = {} }) => {
     const start = Date.now();

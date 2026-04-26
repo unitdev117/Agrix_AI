@@ -34,7 +34,7 @@ controllers/botController.js
 
 controllers/geminiController.js
 --------------------------------
-- Initialization: Creates a `GoogleGenerativeAI` client with the Gemini API key and derives a model name. The fallback of `models/gemini-2.5-flash-lite` is chosen because it is cheap and fast enough for live chat.
+- Initialization: Creates a `GoogleGenerativeAI` client with the Gemini API key and derives a model name. The fallback of `models/gemini-3.1-flash-lite-preview` is chosen because it is cheap and fast enough for live chat.
 - `generateResponse(prompt, language)`: Builds a single string that contains the user message plus a plain-language instruction like "Please provide the response in Bengali". It then calls `model.generateContent` and extracts the plain text. Errors are swallowed with an apologetic message so the bot can gracefully degrade when the AI API hiccups. Stateless prompts were chosen to keep memory usage low and avoid storing long chat histories.
 
 models/User.js

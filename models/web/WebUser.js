@@ -22,6 +22,10 @@ const buildWebUserModel = (connection) => {
                 type: String,
                 default: null,
             },
+            language: {
+                type: String,
+                default: 'en',
+            },
             role: {
                 type: String,
                 enum: ['widget_user', 'agent', 'admin'],

@@ -184,10 +184,10 @@ const createSocketServer = (httpServer) => {
         return true;
     };
 
-    const streamAiResponse = async ({ sessionId, prompt, sourceMessageId }) => {
+    const streamAiResponse = async ({ sessionId, prompt, sourceMessageId, language = 'en' }) => {
         const aiText = await aiService.generateResponse({
             prompt,
-            language: 'English',
+            language,
             context: {
                 channel: 'web',
                 sessionId,
@@ -586,6 +586,7 @@ const createSocketServer = (httpServer) => {
                     sessionId: session.session_id,
                     fullName: payload.fullName.trim(),
                     phoneNumber: payload.phoneNumber.trim(),
+                    language: payload.language || 'en',
                 });
 
                 await appendOnboardingAnswer(session, 'name', payload.fullName.trim());
@@ -758,10 +759,12 @@ const createSocketServer = (httpServer) => {
                 });
 
                 if (session.state === SESSION_STATES.AI_CHAT) {
+                    const profile = await getWebUserProfileBySession({ sessionId: session.session_id });
                     await streamAiResponse({
                         sessionId: session.session_id,
                         prompt: payload.text,
                         sourceMessageId: payload.messageId,
+                        language: profile ? profile.language : 'en',
                     });
                 }
             } catch (error) {

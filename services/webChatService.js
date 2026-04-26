@@ -24,7 +24,7 @@ const touchWebUser = async ({ userId, displayName, role = 'widget_user', metadat
     );
 };
 
-const updateWebUserProfileBySession = async ({ sessionId, fullName, phoneNumber }) => {
+const updateWebUserProfileBySession = async ({ sessionId, fullName, phoneNumber, language }) => {
     const { WebSession, WebUser } = getWebModels();
 
     const session = await WebSession.findOne({ session_id: sessionId });
@@ -38,9 +38,11 @@ const updateWebUserProfileBySession = async ({ sessionId, fullName, phoneNumber 
             $set: {
                 display_name: fullName,
                 phone_number: phoneNumber,
+                language: language || 'en',
                 last_seen_at: new Date(),
                 'metadata.full_name': fullName,
                 'metadata.phone_number': phoneNumber,
+                'metadata.language': language || 'en',
             },
         },
         {
@@ -67,6 +69,7 @@ const getWebUserProfileBySession = async ({ sessionId }) => {
     return {
         displayName: user.display_name || user.metadata?.full_name || '',
         phoneNumber: user.phone_number || user.metadata?.phone_number || '',
+        language: user.language || user.metadata?.language || 'en',
     };
 };
 

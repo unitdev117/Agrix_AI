@@ -21,6 +21,7 @@
     pendingProfile: {
       fullName: '',
       phoneNumber: '',
+      language: '',
     },
     routePromptShown: false,
     aiIntroShown: false,
@@ -33,6 +34,8 @@
   const quickActions = document.getElementById('quickActions');
   const talkAiBtn = document.getElementById('talkAiBtn');
   const talkPersonnelBtn = document.getElementById('talkPersonnelBtn');
+
+  const languageActions = document.getElementById('languageActions');
 
   const profileControls = document.getElementById('profileControls');
   const profileInput = document.getElementById('profileInput');
@@ -99,7 +102,8 @@
     const inAiChat = state.currentState === 'ai_chat';
 
     quickActions.style.display = inRouteChoice && !state.profileStep ? 'flex' : 'none';
-    profileControls.style.display = inRouteChoice && Boolean(state.profileStep) ? 'flex' : 'none';
+    profileControls.style.display = inRouteChoice && (state.profileStep === 'name' || state.profileStep === 'phone') ? 'flex' : 'none';
+    languageActions.style.display = inRouteChoice && state.profileStep === 'language' ? 'flex' : 'none';
     chatControls.style.display = inAiChat ? 'flex' : 'none';
 
     if (inRouteChoice && !state.routePromptShown) {
@@ -159,6 +163,7 @@
     state.pendingProfile = {
       fullName: '',
       phoneNumber: '',
+      language: '',
     };
     state.profileStep = 'name';
 
@@ -172,12 +177,14 @@
   const submitProfileAndStartAi = () => {
     const fullName = state.pendingProfile.fullName.trim();
     const phoneNumber = state.pendingProfile.phoneNumber.trim();
+    const language = state.pendingProfile.language || 'en';
 
     sendEvent('profile:submit', {
       messageId: messageId(),
       sessionId: state.sessionId,
       fullName,
       phoneNumber,
+      language,
     }, () => {
       sendEvent('route:choose', {
         messageId: messageId(),
@@ -315,9 +322,25 @@
       state.pendingProfile.phoneNumber = cleaned;
       appendMessage({ senderType: 'widget_user', text: cleaned });
       profileInput.value = '';
-      submitProfileAndStartAi();
+      
+      state.profileStep = 'language';
+      appendMessage({ senderType: 'system', text: 'Please select your preferred language.' });
+      setUiForState();
     }
   });
+
+  if (languageActions) {
+    const langButtons = languageActions.querySelectorAll('button');
+    langButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const selectedLang = btn.getAttribute('data-lang');
+        const langName = btn.textContent;
+        state.pendingProfile.language = selectedLang;
+        appendMessage({ senderType: 'widget_user', text: langName });
+        submitProfileAndStartAi();
+      });
+    });
+  }
 
   chatSend.addEventListener('click', () => {
     const text = chatInput.value.trim();
