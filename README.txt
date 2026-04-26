@@ -1,66 +1,143 @@
-To start the server 
-    Type npm start
+AgrixCheck - Telegram + Web Socket Platform
+===========================================
 
-Make sure before turning it up that your IP is listed in MongoDB
+Overview
+--------
+This service now runs:
+- Existing Telegram bot flow (unchanged behavior)
+- Express health endpoints only (`GET /` and `GET /ready`)
+- Socket.IO chat/onboarding/handoff flows under:
+  - `/widget` namespace (end users)
+  - `/agent` namespace (agents/admin)
 
-# Gemini Telegram Bot
+All web chat logic is socket-event based (no HTTP chat endpoints).
 
-A Telegram bot powered by Google's Gemini AI model that supports multilingual conversations (English and Hindi).
+Tech Notes
+----------
+- Two MongoDB logical databases are used:
+  - `agrix_telegram` (existing default mongoose connection via `MONGO_URI`)
+  - `agrix_web` (new dedicated mongoose connection via `MONGO_WEB_URI` or `MONGO_URI` + `MONGO_WEB_DB_NAME`)
+- Shared AI service (`services/aiService.js`) is reused by:
+  - Telegram controller
+  - Web socket handlers
+- AI service includes timeout, retry, fallback response, and latency/error logs.
 
-## Features
+Environment Variables
+---------------------
+Required for Telegram:
+- `TELEGRAM_BOT_TOKEN`
+- `GEMINI_API_KEY`
+- `MONGO_URI`
 
-- 🤖 Powered by Gemini-2.5-Flash-Lite AI model
-- 🌐 Multilingual support (English, Hindi, Bengoli & Bhojuri)
-- 💾 MongoDB integration for user preferences
-- 🚀 Express server for monitoring
-- 🔄 In-memory caching for better performance
+Web/socket variables:
+- `PORT` (default `8000`)
+- `MONGO_WEB_URI` (optional; falls back to `MONGO_URI`)
+- `MONGO_WEB_DB_NAME` (default `agrix_web`)
+- `SOCKET_CORS_ALLOWLIST` (comma-separated origins)
+- `WIDGET_SITE_KEY` (widget namespace auth)
+- `AGENT_JWT_SECRET` (agent JWT verification; if missing, local-dev fallback is enabled)
+- `SOCKET_RATE_LIMIT_WINDOW_MS` (default `60000`)
+- `SOCKET_RATE_LIMIT_MAX` (default `60`)
+- `AI_TIMEOUT_MS` (default `12000`)
+- `AI_RETRIES` (default `1`)
+- `AI_FALLBACK_RESPONSE` (optional)
+- `HANDOFF_PHONE` (default placeholder)
+- `HANDOFF_WHATSAPP` (default placeholder)
 
-## Prerequisites
+Run
+---
+1. Install deps (if needed): `npm install`
+2. Start API + widget UI together: `npm start`
+3. Open:
+   - Widget POC: `http://localhost:5500/index.html`
+   - Agent dashboard: `http://localhost:5500/agent.html`
+4. Optional (run only one side):
+   - API only: `npm run serve:api`
+   - UI only: `npm run serve:ui`
 
-- Node.js (Latest LTS version recommended)
-- MongoDB instance
-- Telegram Bot Token
-- Google Gemini API Key
+Socket Contract (Week 1)
+------------------------
+Widget -> server:
+- `session:start`
+- `onboarding:answer`
+- `route:choose`
+- `chat:user_message`
+- `session:close`
 
-## Environment Variables
+Agent -> server:
+- `agent:online`
+- `handoff:accept`
+- `chat:agent_message`
+- `handoff:resolve`
 
-Create a `.env` file in the root directory with the following variables:
+Server -> widget/agent:
+- `session:state`
+- `chat:message`
+- `handoff:status`
+- `queue:update`
+- `error:event`
 
-```env
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-GEMINI_API_KEY=your_gemini_api_key
-MONGO_URI=your_mongodb_connection_string
-PORT=8000 (optional)
+Idempotency
+-----------
+- Every inbound client event requires `messageId`.
+- Ack callbacks return `{ ok: true/false }`.
+- Duplicate `(session_id, source, message_id)` events are acknowledged as duplicates and not reprocessed.
 
+Session State Machine
+---------------------
+Allowed transitions only:
+- `new -> onboarding -> route_choice -> ai_chat | human_handoff -> closed`
 
+Invalid transitions are rejected with standardized `error:event` containing:
+- `code`
+- `message`
+- `currentState`
+- `validNextStates`
 
-Dependencies
-@google/generative-ai: Gemini AI integration
-node-telegram-bot-api: Telegram Bot API
-express: Web server framework
-mongoose: MongoDB ODM
-dotenv: Environment variable management
+Web Collections (`agrix_web`)
+-----------------------------
+- `web_users`
+- `web_sessions`
+- `web_messages`
+- `web_events`
+- `human_handoffs`
 
+Indexes include (where applicable):
+- `session_id`
+- `timestamp`
+- `active`
+- `last_seen_at`
 
-Create a new bot with @BotFather on Telegram
-Get your Gemini API key from Google AI Studio
-Set up a MongoDB instance and get your connection string
-Configure your environment variables
-Start the server using node app.js
-Send /start to your bot on Telegram
+Production Hardening Scaffolding
+--------------------------------
+Implemented scaffolding:
+- Namespace auth:
+  - Widget: site key
+  - Agent: JWT + role (`agent`/`admin`)
+- CORS allowlist for socket origins
+- Socket rate limiting (IP/session/event keyed)
+- Payload validation per event
+- Structured logging and centralized socket error emission
+- Reconnect/session resume via `session:start` + persisted `sessionId`
+- Readiness checks (`GET /ready`)
+- Monitoring counters:
+  - active widget sockets
+  - active agent sockets
+  - queue length
+  - AI latency / AI error rate
+  - socket error count
 
+Deployment Guidance
+-------------------
+1. Deploy to staging first.
+2. Validate:
+   - onboarding flow
+   - AI route chat
+   - human handoff queue/accept/resolve
+   - reconnect with persisted `sessionId`
+   - metrics and readiness
+3. Promote same artifact/config pattern to production.
 
-├── app.js              # Main application entry point
-├── config/
-│   └── db.js          # MongoDB configuration
-├── controllers/
-│   ├── botController.js    # Telegram bot command handlers
-│   └── geminiController.js # Gemini AI integration
-├── models/
-│   └── User.js        # User model schema
-├── services/
-│   ├── botSetupService.js  # Bot initialization
-│   ├── cacheService.js     # In-memory caching
-│   └── databaseService.js  # Database operations
-└── utils/
-    └── helpers.js     # Utility functions
+Load Balancer Note (Socket.IO)
+------------------------------
+For horizontally scaled deployment, enable sticky sessions at the load balancer so long-lived Socket.IO connections remain pinned to the same backend instance.

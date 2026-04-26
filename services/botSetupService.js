@@ -1,3 +1,5 @@
+const logger = require('./loggerService');
+
 /**
  * Sets the bot's command menu that users sees.
  * @param {object} bot - The initialized node-telegram-bot-api instance.
@@ -16,10 +18,10 @@ const setBotCommands = async (bot) => {
         ];
 
         await bot.setMyCommands(commands);
-        console.log('Bot commands menu has been set successfully.');
+        logger.success('Bot commands menu has been set successfully.');
 
     } catch (error) {
-        console.error('Error setting bot commands:', error.message);
+        logger.error('Error setting bot commands:', { error });
     }
 };
 

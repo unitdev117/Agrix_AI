@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
+const logger = require('../services/loggerService');
 
 const connectDB = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        console.log('MongoDB Connected...');
+        logger.success('MongoDB Connected Successfully to Telegram DB');
     } catch (err) {
-        console.error('MongoDB Connection Error:', err.message);
+        logger.error('MongoDB Connection Error', { error: err });
         // Exit process with failure
         process.exit(1);
     }

@@ -20,6 +20,14 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: 'en', // Default language is English
     },
+    usage_count: {
+        type: Number,
+        default: 0,
+    },
+    last_used_at: {
+        type: Date,
+        default: null,
+    },
 }, {
     timestamps: true // Adds createdAt and updatedAt timestamps
 });

@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agrix Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090b;               /* extreme dark */
+      --bg-gradient: radial-gradient(circle at top, #18181b 0%, #09090b 100%);
+      --panel: rgba(24, 24, 27, 0.4); /* translucent */
+      --panel-hover: rgba(24, 24, 27, 0.6);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --accent: #10b981;           /* vibrant emerald */
+      --accent-hover: #059669;
+      --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --backdrop: blur(16px);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-gradient);
+      color: var(--text);
+      font-family: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Animated background glow */
+    body::before, body::after {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: -1;
+      opacity: 0.15;
+      animation: float 25s infinite alternate;
+    }
+    body::before {
+      background: #10b981;
+      top: -150px;
+      left: -150px;
+    }
+    body::after {
+      background: #3b82f6;
+      bottom: -150px;
+      right: -150px;
+    }
+    @keyframes float {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(150px, 100px); }
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--panel);
+      backdrop-filter: var(--backdrop);
+      -webkit-backdrop-filter: var(--backdrop);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.3s ease;
+    }
+    .header:hover {
+      box-shadow: 0 12px 40px 0 rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ffffff, #a1a1aa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    input, button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input {
+      width: 280px;
+      max-width: 100%;
+      background: rgba(24, 24, 27, 0.6);
+      color: var(--text);
+    }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+      background: rgba(24, 24, 27, 0.9);
+    }
+    input::placeholder {
+      color: #71717a;
+    }
+
+    button {
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button::before {
+      content: '↻';
+      font-size: 16px;
+    }
+    button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.02em;
+    }
+    /* Small pulsing indicator for status */
+    .status::before {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+      70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--panel);
+      backdrop-filter: var(--backdrop);
+      -webkit-backdrop-filter: var(--backdrop);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
+      max-height: 70vh;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px 0 rgba(0,0,0,0.6);
+      background: var(--panel-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .card h2 {
+      margin: 0;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+      font-weight: 500;
+      background: rgba(24, 24, 27, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .count {
+      color: var(--accent);
+      font-size: 13px;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      padding: 0;
+      flex: 1;
+    }
+    /* Scrollbar styling */
+    .table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-wrap::-webkit-scrollbar-track { background: transparent; }
+    .table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .table-wrap::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: rgba(24, 24, 27, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 1;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    tbody tr {
+      transition: background 0.2s, transform 0.1s;
+    }
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Column styling specifics */
+    td:first-child {
+      font-weight: 500;
+      color: #fff;
+    }
+    td:nth-child(n+4) {
+      color: var(--muted);
+    }
+    
+    td:empty::after {
+      content: "-";
+      color: #52525b;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 60px 24px;
+      font-size: 15px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      height: 100%;
+    }
+    /* Simple empty state iconography */
+    .empty::before {
+      content: '📭';
+      font-size: 48px;
+      opacity: 0.6;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .card {
+        min-height: 400px;
+      }
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .controls {
+        flex-direction: column;
+      }
+      input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="header">
+      <div>
+        <h1>Agrix Dashboard</h1>
+        <div class="status" id="status">Idle</div>
+      </div>
+      <div class="controls">
+        <input id="apiBaseUrl" placeholder="API Base URL" value="http://localhost:8000" />
+        <button id="refreshBtn">Refresh Data</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>
+          <span>Telegram Bot Users</span>
+          <span id="telegramCount" class="count">0</span>
+        </h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Language</th>
+                <th>Usage Count</th>
+                <th>Last Used</th>
+              </tr>
+            </thead>
+            <tbody id="telegramBody"></tbody>
+          </table>
+          <div id="telegramEmpty" class="empty" style="display: none;">No Telegram user records found.</div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>
+          <span>Web Widget Users</span>
+          <span id="webCount" class="count">0</span>
+        </h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Sessions</th>
+                <th>Last Seen</th>
+              </tr>
+            </thead>
+            <tbody id="webBody"></tbody>
+          </table>
+          <div id="webEmpty" class="empty" style="display: none;">No web widget user records found.</div>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <script src="./agent.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+AgrixCheck Repository Summary
+=============================
+
+Overview
+--------
+This project hosts a Telegram chatbot called Agrix that talks to people in multiple Indian languages using Google's Gemini AI. Behind the scenes it stores each chatter's language choice in MongoDB, keeps a mini in-memory cache for quick lookups, and exposes a tiny Express web server so you can tell the bot is alive. Every module is split up so that the messaging logic, AI calls, database code, and helper utilities stay easy to reason about.
+
+app.js
+------
+- Environment setup (`require('dotenv').config()`): Loads all secret keys (Telegram token, Gemini key, Mongo connection) from a `.env` file so nothing sensitive is hard-coded.
+- Express app + Telegram bot bootstrapping: Creates the HTTP server on port 8000 (or `PORT`) and instantiates the Telegram bot with polling so the code simply asks Telegram for new messages instead of waiting for webhooks. Polling is easier to host and debug.
+- `connectDB()`: Immediately opens the MongoDB connection before the bot starts so that any database failure is caught early instead of mid-chat.
+- `setBotCommands(bot)` then `botController.setBot(bot)`: The command menu is baked in first so Telegram users instantly see available commands, and then the shared bot instance is passed into the controller so every handler can reuse it.
+- Bot event listeners:
+  * `/start` handler: delegates to `botController.handleStart` so all welcome logic lives in one place.
+  * `/lang` handler: same idea for language changes.
+  * `callback_query`: forwards button presses (like language selection) to the controller.
+  * `message`: funnels any plain text into the controller unless the text starts with `/`, so commands keep their own flow.
+  * `polling_error`: logs polling failures so the maintainer knows if Telegram connectivity drops.
+- Express route `app.get('/')`: returns a friendly string so uptime monitors can hit the server and confirm the bot process is alive.
+- `app.listen(...)`: Starts the HTTP server after everything else is wired, giving a single console log to confirm success.
+
+config/db.js
+------------
+- `connectDB`: Wraps `mongoose.connect` in a try/catch. On success it prints "MongoDB Connected"; on failure it prints the message and bails out with `process.exit(1)` to avoid running the bot without storage. That early exit keeps data consistency rather than letting the bot fail later in random places.
+
+controllers/botController.js
+----------------------------
+- Module-level `setBot`: Stores the bot instance that was created in `app.js`. This avoids re-import loops and makes testing easier.
+- `handleStart(msg)`: Looks up (or creates) the user using `databaseService.findOrCreateUser`. If it is a brand-new user, it greets them and immediately triggers the language picker to force a preference. If it is a returning user, it reminds them which language is set so they know whether they need `/lang`. Centralizing this logic ensures a predictable onboarding flow.
+- `handleLanguage(msg)`: Builds the inline keyboard through `getLanguageKeyboard()` and sends it. Separating this into its own function lets `/start` reuse it and keeps the keyboard definition inside the helpers file.
+- `handleCallbackQuery(callbackQuery)`: Reacts to button presses whose callback IDs start with `lang_`. It updates the database, mirrors the change inside the in-memory cache (`cacheService.set`) for fast reuse, acknowledges the user in plain language, and wipes the inline keyboard from the old message so the UI stays clean. Using cache + DB avoids unnecessary reads when the same user immediately sends another message.
+- `handleMessage(msg)`: Ignores slash-commands, shows the "typing" indicator (`bot.sendChatAction`) for UX, fetches/creates the user to know their language, calls the Gemini controller for a response in that language, and relays the answer back. Any exception drops into a generic apology so chats never stay silent.
+
+controllers/geminiController.js
+--------------------------------
+- Initialization: Creates a `GoogleGenerativeAI` client with the Gemini API key and derives a model name. The fallback of `models/gemini-2.5-flash-lite` is chosen because it is cheap and fast enough for live chat.
+- `generateResponse(prompt, language)`: Builds a single string that contains the user message plus a plain-language instruction like "Please provide the response in Bengali". It then calls `model.generateContent` and extracts the plain text. Errors are swallowed with an apologetic message so the bot can gracefully degrade when the AI API hiccups. Stateless prompts were chosen to keep memory usage low and avoid storing long chat histories.
+
+models/User.js
+--------------
+- Mongoose schema `UserSchema`: Stores `telegramId`, `firstName`, optional `username`, and a `language` code defaulting to English. `timestamps: true` was enabled to automatically track when someone first spoke to the bot. Conversation history fields were intentionally removed to reduce Mongo storage and privacy risk.
+
+services/botSetupService.js
+---------------------------
+- `setBotCommands(bot)`: Pushes `/start` and `/lang` into Telegram's command list so the bot's menu shows friendly labels. Wrapping this in a service keeps `app.js` tidy and makes it easy to add more commands later without touching the controller.
+
+services/cacheService.js
+------------------------
+- Internal `Map`: Serves as a super lightweight cache for per-user settings. An in-memory cache is sufficient because language preferences rarely change and it avoids extra database reads on every message.
+- `set(key, value)`: Writes to the Map.
+- `get(key)`: Reads from the Map; returns `undefined` if the key was never cached.
+- `del(key)`: Removes a cached entry if needed (currently not called but available for future invalidation).
+
+services/databaseService.js
+---------------------------
+- `findOrCreateUser(userInfo)`: Checks Mongo for an existing user by Telegram ID. If absent, it creates the record and logs the event; it returns both the user document and an `isNew` flag so the controller knows whether to run onboarding steps. This prevents duplicate users and centralizes database validation.
+- `updateUserLanguage(telegramId, languageCode)`: Uses `findOneAndUpdate` with `{ new: true }` so the caller immediately receives the fresh document. Updating by ID keeps the operation atomic.
+
+utils/helpers.js
+----------------
+- `getLanguageKeyboard()`: Produces the inline keyboard object with two rows of buttons (English/Hindi and Bangla/Bhojpuri). Keeping this separate avoids repeating keyboard JSON blobs inside controllers.
+- `languageMap`: Maps language codes to human-friendly labels so the rest of the codebase can convert `en` into "English" whenever it talks to people.
+
+README.txt
+----------
+- Acts as the operator guide: lists prerequisites, environment variables, startup steps, and a directory tree. It also reminds maintainers to allow their IPs in the MongoDB firewall before running the bot.
+
+Design Themes
+-------------
+- Strict separation of concerns: app bootstrapper, controllers, services, and helpers all have single duties, which makes it easier for a new contributor to trace logic.
+- Early failure on missing env vars or DB connectivity prevents half-configured deployments from running.
+- Simplicity first: polling over webhooks, in-memory cache over Redis, stateless Gemini prompts instead of storing histories—each choice favors low maintenance and fast deployment over complex infrastructure.
+
+Interview Pitch
+---------------
+If an interviewer asks what Agrix does, describe it as a 
+It is multilingual Telegram companion that plugs Google's Gemini brain into a lightweight Node.js bot. Explain that the bot greets each user, stores their language preference in MongoDB, and reuses a tiny cache so every reply is instant. Incoming messages flow through a controller that fetches the user profile, asks Gemini for a response in the right language, and sends it back via Telegram while an Express heartbeat route proves the bot is online. The design intentionally keeps infra simple—polling instead of webhooks, stateless prompts instead of long histories—so the focus stays on delivering fast, friendly chat experiences across English, Hindi, Bengali, and Bhojpuri.

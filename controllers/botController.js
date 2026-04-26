@@ -84,7 +84,8 @@ const handleMessage = async (msg) => {
 
         const responseText = await geminiController.generateResponse(text, languageMap[language]);
 
-        await bot.sendMessage(chatId, responseText);
+        // Send the AI response to Telegram with markdown parsing enabled
+        await bot.sendMessage(chatId, responseText, { parse_mode: 'Markdown' });
 
     } catch (error) {
         console.error('Error handling message:', error);
