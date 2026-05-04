@@ -50,10 +50,8 @@ const updateUserLanguage = async (telegramId, languageCode) => {
     );
 };
 
-// The addMessageToHistory function has been removed entirely.
 
 module.exports = {
     findOrCreateUser,
     updateUserLanguage,
-    // addMessageToHistory is no longer exported.
 };

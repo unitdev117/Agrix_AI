@@ -9,11 +9,10 @@ const { languageMap } = require('./helpers');
  * @returns {string} The full prompt to send to the Gemini model
  */
 const buildPrompt = (prompt, expectedLanguage) => {
-    // Determine the human-readable language
+
     const languageName = languageMap[expectedLanguage] || expectedLanguage || 'English';
 
-    // The core prompt strictly enforces the Nested Multi-Agent Architecture
-    // while keeping the final output constrained for farmers.
+
     return `
 You are the internal system powering "Agrix", an AI chatbot designed specifically to help farmers.
 You MUST follow the Nested Multi-Agent Architecture rules:

@@ -5,7 +5,6 @@ const { getLanguageKeyboard, languageMap } = require('../utils/helpers');
 
 let bot;
 
-// Function to set the bot instance
 const setBot = (b) => {
     bot = b;
 };
@@ -16,11 +15,9 @@ const handleStart = async (msg) => {
         const { user, isNew } = await dbService.findOrCreateUser(msg.from);
 
         if (isNew) {
-            // New user flow: Greet and ask for language
             await bot.sendMessage(chatId, `👋 Welcome, ${msg.from.first_name}! I am a Agrix - AI bot.`);
             handleLanguage(msg);
         } else {
-            // Returning user flow: Welcome them back
             const langName = languageMap[user.language] || 'English';
             await bot.sendMessage(chatId, `👋 Welcome back, ${msg.from.first_name}! Your current language is set to ${langName}. You can start chatting, or use /lang to change it.`);
         }
@@ -84,7 +81,6 @@ const handleMessage = async (msg) => {
 
         const responseText = await geminiController.generateResponse(text, languageMap[language]);
 
-        // Send the AI response to Telegram with markdown parsing enabled
         await bot.sendMessage(chatId, responseText, { parse_mode: 'Markdown' });
 
     } catch (error) {

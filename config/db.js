@@ -8,7 +8,6 @@ const connectDB = async () => {
         logger.success('MongoDB Connected Successfully to Telegram DB');
     } catch (err) {
         logger.error('MongoDB Connection Error', { error: err });
-        // Exit process with failure
         process.exit(1);
     }
 };

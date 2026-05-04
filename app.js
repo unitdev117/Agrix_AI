@@ -181,7 +181,6 @@ const bootstrap = async () => {
         await connectDB();
         await connectWebDB();
 
-        // Trigger model compilation and index setup at startup.
         getWebModels();
 
         initializeTelegramBot();

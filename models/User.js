@@ -2,7 +2,7 @@
 
 const mongoose = require('mongoose');
 
-// The conversationHistory has been removed from the schema.
+
 const UserSchema = new mongoose.Schema({
     telegramId: {
         type: Number,
@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema({
     },
     language: {
         type: String,
-        default: 'en', // Default language is English
+        default: 'en',
     },
     usage_count: {
         type: Number,
@@ -29,7 +29,7 @@ const UserSchema = new mongoose.Schema({
         default: null,
     },
 }, {
-    timestamps: true // Adds createdAt and updatedAt timestamps
+    timestamps: true
 });
 
 module.exports = mongoose.model('User', UserSchema);

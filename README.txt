@@ -20,6 +20,8 @@ Tech Notes
 - Shared AI service (`services/aiService.js`) is reused by:
   - Telegram controller
   - Web socket handlers
+- AI service leverages Gemini 3.1 Flash Lite Preview with a Nested Multi-Agent prompt architecture (Architect/Engine/Concierge).
+- Logic Segregation: AI prompts are built via `utils/promptBuilder.js` to ensure layman-friendly responses for farmers.
 - AI service includes timeout, retry, fallback response, and latency/error logs.
 
 Environment Variables
@@ -86,7 +88,7 @@ Idempotency
 Session State Machine
 ---------------------
 Allowed transitions only:
-- `new -> onboarding -> route_choice -> ai_chat | human_handoff -> closed`
+- `new -> onboarding (Name -> Phone -> Language) -> route_choice -> ai_chat | human_handoff -> closed`
 
 Invalid transitions are rejected with standardized `error:event` containing:
 - `code`
